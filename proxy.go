@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -53,28 +52,10 @@ func isauthed(r *http.Request) bool {
 		return false
 	}
 
-	resp, err := http.Get("https://secure.demilletech.net/api/key")
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-	keyb, _ := ioutil.ReadAll(resp.Body)
-	key := string(keyb)
-
-	println(key)
-
-	return true
+	return VerifyToken(cookie.Value, "#INDRAK#")
 }
 
 func proxyhandler(w http.ResponseWriter, r *http.Request) {
-	/*proxy := NewMultipleHostReverseProxy([]*url.URL{
-		{
-			Scheme: "http",
-			Host:   "127.0.0.1:5000",
-		},
-	})*/
-
-	//url, _ := url.Parse("http://example.com/")
 	url := url.URL{
 		Scheme: "http",
 		Host:   "www.example.com",
@@ -82,12 +63,13 @@ func proxyhandler(w http.ResponseWriter, r *http.Request) {
 
 	if isauthed(r) {
 		println("Authed!")
+		proxy := NewMultipleHostReverseProxy(&url)
+		proxy.ServeHTTP(w, r)
 	} else {
 		println("Unauthed!")
+		requestToken := GenerateToken("0", GetDomain()+r.RequestURI)
+		http.Redirect(w, r, "https://secure.demilletech.net/external/signin/?request_token="+requestToken, http.StatusFound)
 	}
-
-	proxy := NewMultipleHostReverseProxy(&url)
-	proxy.ServeHTTP(w, r)
 
 }
 
