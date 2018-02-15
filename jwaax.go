@@ -94,7 +94,6 @@ func encodeToken(payload map[string]interface{}) string {
 }
 
 func GenerateToken(uniqueid string, returl string) string {
-	println(GetEpochTime())
 	payload := jwt.MapClaims{
 		"aud":      "secure.demilletech.net",
 		"domain":   GetDomain(),

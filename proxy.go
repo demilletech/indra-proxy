@@ -46,16 +46,44 @@ func NewMultipleHostReverseProxy(target *url.URL) *httputil.ReverseProxy {
 
 func isauthed(r *http.Request) bool {
 	cookie, _ := r.Cookie("jt")
-	//println(cookie.Value)
 
 	if cookie == nil {
+		println("COOKIE IS NIL")
 		return false
 	}
+	println(cookie.Value)
 
 	return VerifyToken(cookie.Value, "#INDRAK#")
 }
 
 func proxyhandler(w http.ResponseWriter, r *http.Request) {
+	println(r.URL.Path)
+	if r.URL.Path == "/debug" {
+		w.Write([]byte("Hi!"))
+		return
+	}
+	if r.URL.Path == "/jwaax_authenticate" {
+		println("AUTH")
+		jt := r.URL.Query().Get("jt")
+		if jt == "" {
+			//println("404")
+			w.WriteHeader(404)
+		} else {
+			//println("Got Cookie")
+			//println(jt)
+			cookie := &http.Cookie{
+				Name:    "jt",
+				Value:   jt,
+				Expires: time.Now().Add(time.Duration(7884000)),
+				MaxAge:  0,
+			}
+			//w.Write([]byte("Hello World"))
+			http.Redirect(w, r, "/", http.StatusFound)
+			http.SetCookie(w, cookie)
+			return
+		}
+	}
+
 	url := url.URL{
 		Scheme: "http",
 		Host:   "www.example.com",
@@ -67,14 +95,13 @@ func proxyhandler(w http.ResponseWriter, r *http.Request) {
 		proxy.ServeHTTP(w, r)
 	} else {
 		println("Unauthed!")
-		requestToken := GenerateToken("0", GetDomain()+r.RequestURI)
-		http.Redirect(w, r, "https://secure.demilletech.net/external/signin/?request_token="+requestToken, http.StatusFound)
+		requestToken := GenerateToken("0", GetDomain()+"/jwaax_authenticate")
+		http.Redirect(w, r, "http://secure.demilletech.net/external/signin/?request_token="+requestToken, http.StatusFound)
 	}
-
 }
 
 func main() {
 	http.HandleFunc("/", proxyhandler)
 	println("Starting Server")
-	log.Fatal(http.ListenAndServe(":9090", nil))
+	log.Fatal(http.ListenAndServe(":80", nil))
 }
