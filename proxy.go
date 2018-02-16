@@ -1,16 +1,21 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"time"
 )
 
 const dirtyRedirect string = "<script>window.location.replace('/');</script>"
+
+var urls = map[string]string{}
 
 // NewMultipleHostReverseProxy creates a reverse proxy that will randomly
 // select a host from the passed `targets`
@@ -37,6 +42,22 @@ func NewMultipleHostReverseProxy(target *url.URL) *httputil.ReverseProxy {
 		}
 		return conn, err
 	}
+
+	modresp := func(r *http.Response) error {
+		bodyb, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			return err
+		}
+
+		body := string(bodyb)
+
+		println(body)
+
+		body.repl
+
+		return nil
+	}
 	return &httputil.ReverseProxy{
 		Director: director,
 		Transport: &http.Transport{
@@ -44,6 +65,7 @@ func NewMultipleHostReverseProxy(target *url.URL) *httputil.ReverseProxy {
 			Dial:                dial,
 			TLSHandshakeTimeout: 10 * time.Second,
 		},
+		ModifyResponse: modresp,
 	}
 }
 
@@ -81,9 +103,22 @@ func proxyhandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	host := ""
+
+	for key, value := range urls {
+		if strings.HasPrefix(r.URL.Path, key) {
+			host = value
+		}
+	}
+
+	if host == "" {
+		w.WriteHeader(404)
+		return
+	}
+
 	url := url.URL{
 		Scheme: "http",
-		Host:   "www.example.com",
+		Host:   host,
 	}
 
 	if isauthed(r) {
@@ -95,8 +130,23 @@ func proxyhandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func readUrls() {
+	dat, err := ioutil.ReadFile("urls.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	err = json.Unmarshal(dat, &urls)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
 	http.HandleFunc("/", proxyhandler)
+
+	readUrls()
+
 	println("Starting Server")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
