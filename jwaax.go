@@ -70,9 +70,9 @@ func VerifyToken(token string, keya ...string) bool {
 	ret := DecodeToken(token, key)
 	if resp, ok := ret["RESPONSE"]; ok {
 		if resp == "ERROR" {
-			for key, value := range ret {
+			/*for key, value := range ret {
 				println(key + " : " + value)
-			}
+			}*/
 			return false
 		}
 	}
@@ -137,44 +137,44 @@ func DecodeToken(encodedToken string, key string) map[string]string {
 	if !token.Valid { // Meh, kinda faster maybe because I don't 100% trust the compiler?
 		if ve, ok := err.(*jwt.ValidationError); ok {
 			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-				println("INVALID_TOKEN")
+				//println("INVALID_TOKEN")
 				return map[string]string{
 					"RESPONSE": "ERROR",
 					"MESSAGE":  "INVALID_TOKEN",
 				}
 			} else if ve.Errors&(jwt.ValidationErrorNotValidYet) != 0 {
-				println("NOT_VALID_YET")
+				//println("NOT_VALID_YET")
 				return map[string]string{
 					"RESPONSE": "ERROR",
 					"MESSAGE":  "NOT_VALID_YET",
 				}
 			} else if ve.Errors&(jwt.ValidationErrorExpired) != 0 {
-				println("EXPIRED_TOKEN")
+				//println("EXPIRED_TOKEN")
 				return map[string]string{
 					"RESPONSE": "ERROR",
 					"MESSAGE":  "EXPIRED_TOKEN",
 				}
 			} else if ve.Errors&(jwt.ValidationErrorSignatureInvalid) != 0 {
-				println("INVALID_SIGNATURE")
+				//println("INVALID_SIGNATURE")
 				return map[string]string{
 					"RESPONSE": "ERROR",
 					"MESSAGE":  "INVALID_SIGNATURE",
 				}
 			} else if ve.Errors&(jwt.ValidationErrorUnverifiable) != 0 {
-				println("UNVERIFIABLE_TOKEN")
+				//println("UNVERIFIABLE_TOKEN")
 				return map[string]string{
 					"RESPONSE": "ERROR",
 					"MESSAGE":  "UNVERIFIABLE_TOKEN",
 				}
 			} else if ve.Errors&(jwt.ValidationErrorAudience) != 0 {
-				println("INVALID_AUDIENCE")
+				//println("INVALID_AUDIENCE")
 				return map[string]string{
 					"RESPONSE": "ERROR",
 					"MESSAGE":  "INVALID_AUDIENCE",
 				}
 			}
 
-			println("NO_CLUE")
+			//println("NO_CLUE")
 			return map[string]string{
 				"RESPONSE": "ERROR",
 				"MESSAGE":  "NO_CLUE",
