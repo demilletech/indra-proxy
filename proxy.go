@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -71,11 +72,13 @@ func proxyhandler(w http.ResponseWriter, r *http.Request) {
 				Expires: time.Now().Add(time.Hour * 24 * 30),
 			}
 			http.SetCookie(w, cookie)
-			w.Write([]byte(dirtyRedirect))
-			http.Redirect(w, r, "http://beyond.demille.tech/", http.StatusFound)
+			http.Redirect(w, r, "/jwaax_redir", http.StatusFound)
 
 			return
 		}
+	} else if r.URL.Path == "/jwaax_redir" {
+		fmt.Fprintf(w, "Hello!")
+		return
 	}
 
 	url := url.URL{
@@ -95,5 +98,5 @@ func proxyhandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", proxyhandler)
 	println("Starting Server")
-	log.Fatal(http.ListenAndServe(":80", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
